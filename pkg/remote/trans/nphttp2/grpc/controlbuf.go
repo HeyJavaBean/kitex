@@ -30,7 +30,6 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
 
-	"github.com/cloudwego/kitex/internal/utils/safemcache"
 	"github.com/cloudwego/kitex/pkg/klog"
 )
 
@@ -177,22 +176,21 @@ type dataFrame struct {
 	resetPingStrikes *uint32
 }
 
-var poolDataFrame = sync.Pool{
-	New: func() interface{} {
-		return &dataFrame{}
-	},
-}
+//var poolDataFrame = sync.Pool{
+//	New: func() interface{} {
+//		return &dataFrame{}
+//	},
+//}
 
 func newDataFrame() *dataFrame {
-	p := poolDataFrame.Get().(*dataFrame)
-	*p = dataFrame{} // reset all fields
-	return p
+	// p := poolDataFrame.Get().(*dataFrame)
+	return &dataFrame{} // reset all fields
 }
 
 func (p *dataFrame) Release() {
-	safemcache.Free(p.originH)
-	safemcache.Free(p.originD)
-	poolDataFrame.Put(p)
+	// safemcache.Free(p.originH)
+	// safemcache.Free(p.originD)
+	// poolDataFrame.Put(p)
 }
 
 func (*dataFrame) isTransportResponseFrame() bool { return false }
