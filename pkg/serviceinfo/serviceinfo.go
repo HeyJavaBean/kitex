@@ -99,6 +99,19 @@ func (i *ServiceInfo) MethodInfo(name string) MethodInfo {
 	return i.Methods[name]
 }
 
+// HTTPMethodInfo 根据 HTTP Method 和 URL 查找对应的 MethodInfo
+func (i *ServiceInfo) HTTPMethodInfo(method, path string) (methodName string, methodInfo MethodInfo) {
+	if i == nil || i.Methods == nil {
+		return "", nil
+	}
+	for name, m := range i.Methods {
+		if m.HTTPPath() == path && m.HTTPMethod() == method {
+			return name, m
+		}
+	}
+	return "", nil
+}
+
 type StreamingMode int
 
 const (
@@ -117,6 +130,8 @@ type MethodInfo interface {
 	OneWay() bool
 	IsStreaming() bool // deprecated
 	StreamingMode() StreamingMode
+	HTTPMethod() string
+	HTTPPath() string
 }
 
 // MethodHandler is corresponding to the handler wrapper func that in generated code
@@ -132,6 +147,13 @@ func WithStreamingMode(mode StreamingMode) MethodInfoOption {
 		// The judgement logic is deprecated,
 		// and this field should be removed after all generated code is updated.
 		m.isStreaming = mode != StreamingNone
+	}
+}
+
+func WithHTTPMode(method, path string) MethodInfoOption {
+	return func(m *methodInfo) {
+		m.httpMethod = method
+		m.httpPath = path
 	}
 }
 
@@ -158,11 +180,21 @@ type methodInfo struct {
 	oneWay        bool
 	isStreaming   bool
 	streamingMode StreamingMode
+	httpMethod    string
+	httpPath      string
 }
 
 // Handler implements the MethodInfo interface.
 func (m methodInfo) Handler() MethodHandler {
 	return m.handler
+}
+
+func (m methodInfo) HTTPMethod() string {
+	return m.httpMethod
+}
+
+func (m methodInfo) HTTPPath() string {
+	return m.httpPath
 }
 
 // NewArgs implements the MethodInfo interface.
