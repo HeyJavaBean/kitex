@@ -4,6 +4,8 @@ go 1.19
 
 replace github.com/cloudwego/gopkg v0.1.4 => github.com/cloudwego/gopkg v0.1.7-0.20251024104115-9232248ff235
 
+replace github.com/cloudwego/thriftgo v0.4.1 => /Users/bytedance/code/source-code/thriftgo
+
 require (
 	github.com/bytedance/gopkg v0.1.2
 	github.com/bytedance/sonic v1.13.2

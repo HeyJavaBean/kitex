@@ -433,6 +433,13 @@ func (c *converter) makeService(pkg generator.PkgInfo, svc *golang.Service) (*ge
 	return si, nil
 }
 
+var httpTags = map[string]string{
+	"api.post":   "POST",
+	"api.get":    "GET",
+	"api.put":    "PUT",
+	"api.delete": "DELETE",
+}
+
 func (c *converter) makeMethod(si *generator.ServiceInfo, f *golang.Function) (*generator.MethodInfo, error) {
 	st, err := streaming.ParseStreaming(f.Function)
 	if err != nil {
@@ -451,6 +458,16 @@ func (c *converter) makeMethod(si *generator.ServiceInfo, f *golang.Function) (*
 		ServerStreaming:    st.ServerStreaming,
 		ArgsLength:         len(f.Arguments()),
 	}
+
+	// parse http tags
+	for _, anno := range f.GetAnnotations() {
+		if method, ok := httpTags[anno.GetKey()]; ok {
+			mi.HttpMethod = method
+			mi.HttpUrl = anno.GetValues()[0]
+			break
+		}
+	}
+
 	if c.Config.StreamX {
 		mi.IsStreaming = st.ClientStreaming || st.ServerStreaming
 	} else {

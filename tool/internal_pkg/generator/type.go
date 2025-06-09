@@ -211,6 +211,12 @@ type MethodInfo struct {
 	IsStreaming            bool         `json:"is_streaming,omitempty"`
 	ClientStreaming        bool         `json:"client_streaming,omitempty"`
 	ServerStreaming        bool         `json:"server_streaming,omitempty"`
+	HttpMethod             string       `json:"http_method,omitempty"`
+	HttpUrl                string       `json:"http_url,omitempty"`
+}
+
+func (m *MethodInfo) HasHttpTag() bool {
+	return m.HttpMethod != "" || m.HttpUrl != ""
 }
 
 func (m *MethodInfo) StreamingMode() string {

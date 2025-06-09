@@ -58,6 +58,9 @@ var serviceMethods = map[string]kitex.MethodInfo{
 					 {{- else -}} kitex.StreamingNone
 					 {{- end -}}
 				{{- end}}),
+			{{ if .HasHttpTag -}}
+			kitex.WithHTTPMode("{{.HttpMethod}}", "{{.HttpUrl}}"),
+			{{- end}}
 		),
 	{{- end}}
 }
