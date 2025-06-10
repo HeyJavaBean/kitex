@@ -115,6 +115,8 @@ func (t *svrTransHandler) Write(ctx context.Context, conn net.Conn, sendMsg remo
 var TLSConfig *tls.Config
 
 func init() {
+	return
+
 	TLSConfig = &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
