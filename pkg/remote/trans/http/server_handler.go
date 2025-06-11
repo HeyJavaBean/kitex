@@ -77,8 +77,6 @@ type svrTransHandler struct {
 var httpReg = regexp.MustCompile(`^(?:GET |POST|PUT|DELE|HEAD|OPTI|CONN|TRAC|PATC)$`)
 
 func (t *svrTransHandler) ProtocolMatch(ctx context.Context, conn net.Conn) (err error) {
-	return nil
-
 	c, ok := conn.(netpoll.Connection)
 	if ok {
 		// todo handler https
@@ -168,15 +166,14 @@ func (t *svrTransHandler) Read(ctx context.Context, conn net.Conn, recvMsg remot
 		ink.SetMethodName(methodName)
 	}
 
-	recvMsg.NewData(methodName)
-	// reqStruct := recvMsg.Data().(utils.KitexArgs).GetFirstArgument()
-	// todo binding 转换? hertz tag?
-	// binding(reqStruct,httpReq)
+	if err = BindRequest(recvMsg, methodName, httpReq); err != nil {
+		return nil, err
+	}
 
 	return ctx, nil
 }
 
-// 只 return write err
+// OnRead 只 return write err
 func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) (err error) {
 	ctx, ri := t.newCtxWithRPCInfo(ctx, conn)
 	// t.ext.SetReadTimeout(ctx, conn, ri.Config(), remote.Server)
@@ -228,7 +225,7 @@ func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) (err error)
 	if TLSConfig != nil {
 		tlsConn := tls.Server(conn, TLSConfig)
 		if err = tlsConn.Handshake(); err != nil {
-			return fmt.Errorf("handshake error", err)
+			return fmt.Errorf("handshake error: %w", err)
 		}
 		conn = tlsConn
 	}
