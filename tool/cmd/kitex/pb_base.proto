@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package base;
+
+option go_package = "base";
+option java_package = "com.bytedance.protobuf.base";
+
+// TestStruct 对应 thrift 中的 TestStruct
+message TestStruct {
+  string f1 = 1;  // api.query="q1,xxx"
+  string f2 = 2;  // api.cookie="c2"
+  string f3 = 3;  // api.header="h3"
+  string f4 = 4;  // api.body="aaa"
+  string f5 = 5;  // api.cookie="c5" api.header="f5"
+  string f6 = 6;  // api.query="q60,q61"
+  string f7 = 7;  // api.form="q70"
+  int64 f8 = 8;   // json.tag="q80,string"
+  string f9 = 9;  // json.tag="q90" api.body="q91"
+}
+
+// TrafficEnv 对应 thrift 中的 TrafficEnv
+message TrafficEnv {
+  bool open = 1;   // 对应 thrift: bool Open = false
+  string env = 2;  // 对应 thrift: string Env = ""
+}
+
+// Base 对应 thrift 中的 Base
+message Base {
+  string log_id = 1;  // api.query="log_id"
+  string caller = 2;  // 对应 thrift: string Caller = ""
+  string addr = 3;    // 对应 thrift: string Addr = ""
+  string client = 4;  // 对应 thrift: string Client = ""
+  TrafficEnv traffic_env = 5;  // 对应 thrift: optional TrafficEnv TrafficEnv
+  map<string, string> extra = 6;  // 对应 thrift: optional map<string, string> Extra
+}
+
+// BaseResp 对应 thrift 中的 BaseResp
+message BaseResp {
+  string status_message = 1;  // 对应 thrift: string StatusMessage = ""
+  int32 status_code = 2;      // 对应 thrift: i32 StatusCode = 0
+  map<string, string> extra = 3;  // 对应 thrift: optional map<string, string> Extra
+}
+
+// ServiceA 对应 thrift 中的 service A
+service ServiceA {
+  rpc Test(Base) returns (BaseResp);   // api.get="/test"
+  rpc Test2(Base) returns (BaseResp);  // api.get="/test2"
+  rpc Test3(Base) returns (BaseResp);  // api.get="/test3"
+  rpc Test4(Base) returns (BaseResp);  // api.get="/test4"
+  rpc Test5(Base) returns (BaseResp);  // api.get="/test5"
+}

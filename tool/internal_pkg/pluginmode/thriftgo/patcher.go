@@ -393,6 +393,23 @@ func (p *Patcher) patch(req *plugin.Request) (patches []*plugin.Generated, err e
 			})
 		}
 
+		originFilename := util.JoinPath(path, base)
+
+		for _, st := range ast.Structs {
+			for _, f := range st.Fields {
+				tagString, ok := getTagString(f)
+				if !ok {
+					continue
+				}
+				insertPointer := fmt.Sprintf("struct.%s.%s.tag", st.GetName(), f.GetName())
+				patches = append(patches, &plugin.Generated{
+					Content:        tagString,
+					Name:           &originFilename,
+					InsertionPoint: &insertPointer,
+				})
+			}
+		}
+
 	}
 
 	if extraPatchFunc != nil {
