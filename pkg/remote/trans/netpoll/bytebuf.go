@@ -62,10 +62,11 @@ func newNetpollByteBuffer() interface{} {
 }
 
 type netpollByteBuffer struct {
-	writer   netpoll.Writer
-	reader   netpoll.Reader
-	status   int
-	readSize int
+	writer     netpoll.Writer
+	reader     netpoll.Reader
+	status     int
+	readSize   int
+	debugSpace []byte
 }
 
 var _ remote.ByteBuffer = &netpollByteBuffer{}

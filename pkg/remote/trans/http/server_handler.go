@@ -150,6 +150,8 @@ func (t *svrTransHandler) Read(ctx context.Context, conn net.Conn, recvMsg remot
 		rpcinfo.Record(ctx, ri, stats.ReadFinish, err)
 	}()
 
+	// todo http1.1 连接复用、断开链接 循环处理
+
 	httpReq, err := http.ReadRequest(bufio.NewReader(conn))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read http request: %w", err)

@@ -150,6 +150,7 @@ func (a *Arguments) buildFlags(version string) *flag.FlagSet {
 		"frugal_tag",
 		"thrift_streaming",
 		"no_processor",
+		"always_gen_json_tag:",
 	)
 
 	if a.HTTPTags {

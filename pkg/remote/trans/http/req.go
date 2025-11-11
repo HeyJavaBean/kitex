@@ -47,7 +47,7 @@ func BindRequest(recvMsg remote.Message, methodName string, httpReq *http.Reques
 		}
 
 	}
-	// todo 缓存？
+
 	dec, err := binding.NewDecoder(t, &binding.DecodeConfig{})
 	if err != nil {
 		return fmt.Errorf("failed to create decoder: %w", err)

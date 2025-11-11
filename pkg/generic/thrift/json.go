@@ -257,7 +257,6 @@ func (m *ReadJSON) originalRead(ctx context.Context, method string, isClient boo
 	if _, ok := resp.(string); ok {
 		return resp, nil
 	}
-
 	// resp is map
 	// note: use json-iterator since sonic doesn't support map[interface{}]interface{}
 	respNode, err := jsoniter.Marshal(resp)

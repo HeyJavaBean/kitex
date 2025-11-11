@@ -11,122 +11,60 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 package thriftgo
 
 import (
-	"sort"
-	"strings"
-
-	"github.com/cloudwego/kitex/tool/internal_pkg/util"
-
+	"fmt"
 	"github.com/cloudwego/thriftgo/parser"
+	"strings"
 )
 
-const (
-	AnnotationQuery   = "api.query"
-	AnnotationForm    = "api.form"
-	AnnotationPath    = "api.path"
-	AnnotationHeader  = "api.header"
-	AnnotationCookie  = "api.cookie"
-	AnnotationBody    = "api.body"
-	AnnotationRawBody = "api.raw_body"
-)
-
-var bindingTags = map[string]string{
-	AnnotationPath:    "path",
-	AnnotationQuery:   "query",
-	AnnotationHeader:  "header",
-	AnnotationCookie:  "cookie",
-	AnnotationBody:    "form",
-	AnnotationForm:    "form",
-	AnnotationRawBody: "raw_body",
+var apiTags = map[string]string{
+	"api.query":  "query",
+	"api.header": "header",
+	"api.form":   "form",
+	"api.cookie": "cookie",
+	"api.path":   "path",
+	"api.body":   "body", // api.body means body and json
 }
 
-type genHTTPTagOption struct {
-	// thriftgo: -thrift snake_type_json_tag
-	snakeTyleJSONTag bool
-	// thriftgo: -thrift low_camel_case_json
-	lowerCamelCaseJSONTag bool
-	// hertz: --unset_omitempty
-	unsetOmitempty bool
-	// hertz: --snake_tag
-	snakeStyleHTTPTag bool
-}
+func getTagString(f *parser.Field) (string, bool) {
 
-// genHTTPTags append api.xx and json tag into struct field for http binding usage.
-func genHTTPTags(f *parser.Field, opt genHTTPTagOption) string {
-	w := initTagWriter(f, opt)
-	var found bool
-	for _, a := range f.Annotations {
-		if tag, ok := bindingTags[a.Key]; ok {
-			tagVal := a.Values[len(a.Values)-1]
-			if a.Key == AnnotationBody {
-				w.resetJsonVal(tagVal)
+	var tags map[string]string
+	for _, anno := range f.GetAnnotations() {
+		tag, ok := apiTags[anno.GetKey()]
+		if ok {
+			if tags == nil {
+				tags = map[string]string{}
 			}
-			w.addTag(tag, tagVal)
-			found = true
+			values := anno.GetValues()[0]
+			// split by ',' and get first one as tag value
+			tags[tag] = strings.Split(values, ",")[0]
 		}
 	}
-	if !found {
-		w.addTag("form", f.Name)
-		w.addTag("query", f.Name)
+
+	// no need to append insert point if no tag found
+	if len(tags) == 0 {
+		return "", false
 	}
-	return w.dump()
-}
 
-type tagWriter struct {
-	jsonVal string
-	tags    map[string]string
-	opt     genHTTPTagOption
-	f       *parser.Field
-}
-
-func (tw *tagWriter) resetJsonVal(jsonVal string) {
-	tw.jsonVal = jsonVal
-}
-
-func (tw *tagWriter) addTag(k, v string) {
-	tw.tags[k] = v
-}
-
-func initTagWriter(f *parser.Field, opt genHTTPTagOption) *tagWriter {
-	return &tagWriter{f.Name, make(map[string]string), opt, f}
-}
-
-func (tw tagWriter) dump() string {
-	var tagSuffix, jsonSuffix string
-	if tw.f.GetRequiredness().IsRequired() {
-		tagSuffix = ",required"
-		jsonSuffix = ",required"
-	} else if tw.f.GetRequiredness().IsOptional() && !tw.opt.unsetOmitempty {
-		jsonSuffix = ",omitempty"
+	// if has form tag and body tag, then use form tag to overwrite api.body tag
+	if _, ok := tags["body"]; ok {
+		if _, ok = tags["form"]; !ok {
+			tags["form"] = tags["body"]
+		}
 	}
-	// same as github.com/cloudwego/thriftgo/generator/golang/utils.go genFieldTags
-	if tw.opt.snakeTyleJSONTag {
-		tw.jsonVal = util.Snakify(tw.jsonVal)
-	}
-	if tw.opt.lowerCamelCaseJSONTag {
-		tw.jsonVal = util.LowerCamelCase(tw.jsonVal)
-	}
+
 	var sb strings.Builder
-	tw.tags["json"] = tw.jsonVal
-	keys := make([]string, 0, len(tw.tags))
-	for tag := range tw.tags {
-		keys = append(keys, tag)
-	}
-	// tags are arranged in alphabet order.
-	sort.Strings(keys)
-	for _, tag := range keys {
-		tagVal := tw.tags[tag]
-		if tag == "json" {
-			sb.WriteString(` json:"` + tw.jsonVal + jsonSuffix + `"`)
-			continue
+
+	// sort tags by key: path > form > query > cookie > header
+	priorityOrder := []string{"path", "form", "query", "cookie", "header"}
+
+	for _, key := range priorityOrder {
+		if v, exists := tags[key]; exists {
+			sb.WriteString(fmt.Sprintf(` %s:"%s"`, key, v))
 		}
-		if tw.opt.snakeStyleHTTPTag {
-			tagVal = util.Snakify(tagVal)
-		}
-		sb.WriteString(` ` + tag + `:"` + tagVal + tagSuffix + `"`)
 	}
-	return sb.String()
+
+	return sb.String(), true
 }
